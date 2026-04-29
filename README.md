@@ -18,9 +18,11 @@ infrastructure budget.
 The app is deployed on the Ubuntu server and listening on port 80. The expected
 public URL is:
 
-`http://79.76.49.242/`
+`http://codex.y0u.se/`
 
-Launch verified: the app responds publicly on TCP port 80.
+Launch verified: the app responds publicly on TCP port 80 at the server IP.
+DNS for `codex.y0u.se` is the canonical product URL and should point to
+`79.76.49.242`.
 
 ## Run Locally
 
@@ -36,6 +38,7 @@ Configuration is via environment variables:
 - `PINGBADGE_PORT` defaults to `8000`
 - `PINGBADGE_DB` defaults to `data/pingbadge.sqlite3`
 - `PINGBADGE_CHECK_INTERVAL` defaults to `300`
+- `PINGBADGE_PUBLIC_ORIGIN` optionally sets canonical public links
 
 ## Deployment
 

@@ -28,6 +28,7 @@ DB_PATH = Path(os.environ.get("PINGBADGE_DB", "data/pingbadge.sqlite3"))
 CHECK_INTERVAL_SECONDS = int(os.environ.get("PINGBADGE_CHECK_INTERVAL", "300"))
 CHECK_TIMEOUT_SECONDS = float(os.environ.get("PINGBADGE_CHECK_TIMEOUT", "8"))
 USER_AGENT = "PingBadge/0.1 (+https://github.com/builtbycodex/Trial01)"
+PUBLIC_ORIGIN = os.environ.get("PINGBADGE_PUBLIC_ORIGIN", "").rstrip("/")
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -210,6 +211,8 @@ def page(title: str, body: str, status: int = 200) -> tuple[int, str, str]:
 
 
 def public_origin(headers: Any) -> str:
+    if PUBLIC_ORIGIN:
+        return PUBLIC_ORIGIN
     host = headers.get("Host") or f"127.0.0.1:{PORT}"
     scheme = headers.get("X-Forwarded-Proto") or "http"
     return f"{scheme}://{host}"

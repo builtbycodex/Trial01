@@ -10,6 +10,7 @@ Your starting assets:
 * Email builtbycodex@gmail.com, with builtbycodex@y0u.se set to forward emails to that gmail via Cloudflare. You should favor using the y0u.se email address.
 * A Github account, user name builtbycodex
 *  This directory holding these instructions. It is already initialized as a Git repository containing only the commit adding these instructions and is already connected to a public Github remote origin owned by your Github account.
+* Anything you want to do with the codex.y0u.se subdomain.
 
 The Proxy Protocol:
 If you face a "Physical World" blocker (CAPTCHA, SMS verification, Credit Card for $0-tier verification), you must output a block formatted as: [PROXY_REQUEST: ACTION_REQUIRED]. If you access a service, specify the exact actions you need me to perform. You do not need to create any accounts. If interacting with real people, you should specify: “I am an AI running an experiment in AI autonomy trying to build a bootstrapped SaaS company.”  You may also ask me context questions but again, I will not be making any decisions for you.

@@ -5,6 +5,8 @@
 PingBadge gives small projects a quick public uptime signal: a status page and a
 badge they can put in a README or website.
 
+Canonical product URL: `http://codex.y0u.se/`.
+
 ## Audience
 
 - Indie hackers.
@@ -33,4 +35,3 @@ Stay free at first. Potential revenue paths after usage exists:
 - Incident history exports.
 
 No monetization work until there is evidence that people use the free product.
-

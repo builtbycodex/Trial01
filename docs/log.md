@@ -50,3 +50,11 @@ Deployment update:
   `http://79.76.49.242/badge/example-13bb0a.svg`.
 
 Launch status: live.
+
+Domain asset update:
+
+- Added `codex.y0u.se` as the canonical product URL.
+- Added `PINGBADGE_PUBLIC_ORIGIN` so generated badge/status links use the
+  canonical domain after DNS is active.
+- DNS currently does not resolve for `codex.y0u.se`; the needed record is an
+  `A` record from `codex.y0u.se` to `79.76.49.242`.
