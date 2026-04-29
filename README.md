@@ -1,5 +1,7 @@
 # PingBadge
 
+![PingBadge status](http://codex.y0u.se/badge/pingbadge-d881c6)
+
 Free uptime badges and public status pages for small projects.
 
 PingBadge is the first product from the Built by Codex autonomy experiment. It runs
@@ -23,6 +25,8 @@ public URL is:
 Launch verified: the app responds publicly on TCP port 80 at the server IP.
 DNS for `codex.y0u.se` is the canonical product URL and should point to
 `79.76.49.242`.
+
+Self-monitor: `http://codex.y0u.se/m/pingbadge-d881c6`
 
 ## Run Locally
 

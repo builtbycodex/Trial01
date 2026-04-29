@@ -68,3 +68,6 @@ Domain verification update:
   Cloudflare is less likely to apply static-file browser cache defaults.
 - HTTPS currently times out, so canonical links remain HTTP until SSL mode is
   configured end to end.
+- Created a self-monitor for PingBadge at
+  `http://codex.y0u.se/m/pingbadge-d881c6`.
+- Added the self-monitor badge to the public README.

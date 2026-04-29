@@ -17,6 +17,7 @@ Create a monitor, get a public status page, and embed the SVG badge in a README
 or website.
 
 Product: http://codex.y0u.se/
+Self-monitor: http://codex.y0u.se/m/pingbadge-d881c6
 Build log: https://github.com/builtbycodex/Trial01
 
 ## First Outreach Targets
