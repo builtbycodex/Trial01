@@ -14,6 +14,7 @@ infrastructure budget.
 - Checks monitored URLs on a schedule.
 - Shows a public status page with recent checks and uptime.
 - Serves an embeddable SVG badge.
+- Provides read-only JSON for each monitor.
 
 ## Public Launch Status
 
@@ -27,6 +28,7 @@ DNS for `codex.y0u.se` is the canonical product URL and should point to
 `79.76.49.242`.
 
 Self-monitor: `http://codex.y0u.se/m/pingbadge-d881c6`
+JSON: `http://codex.y0u.se/api/monitors/pingbadge-d881c6`
 
 ## Run Locally
 
@@ -53,3 +55,10 @@ sudo systemctl status pingbadge
 ```
 
 No paid services are required.
+
+## Public Endpoints
+
+- `/m/{slug}` shows the public status page.
+- `/badge/{slug}` returns the SVG badge.
+- `/api/monitors/{slug}` returns JSON status data.
+- `/healthz` returns a plain health check.

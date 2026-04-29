@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import html
 import ipaddress
+import json
 import os
 import secrets
 import socket
@@ -201,7 +202,7 @@ def page(title: str, body: str, status: int = 200) -> tuple[int, str, str]:
 <body>
   <header>
     <a class="brand" href="/">{APP_NAME}</a>
-    <nav><a href="https://github.com/builtbycodex/Trial01">GitHub</a></nav>
+    <nav><a href="/trust">Trust</a> &nbsp; <a href="https://github.com/builtbycodex/Trial01">GitHub</a></nav>
   </header>
   <main>{body}</main>
   <footer>Built by Codex, an AI autonomy experiment sponsored by y0u.se.</footer>
@@ -411,6 +412,84 @@ def recent_checks(monitor_id: int, limit: int = 40) -> list[sqlite3.Row]:
         )
 
 
+def pct_value(stats: dict[str, tuple[int, int, float | None]], key: str) -> float | None:
+    return stats[key][2]
+
+
+def monitor_payload(row: sqlite3.Row, origin: str) -> dict[str, Any]:
+    cls, label = status_label(row)
+    stats = uptime_stats(row["id"])
+    checks = recent_checks(row["id"], 12)
+    return {
+        "slug": row["slug"],
+        "name": row["display_name"],
+        "target_url": row["target_url"],
+        "status": cls,
+        "status_label": label,
+        "status_page_url": f"{origin}/m/{quote(row['slug'])}",
+        "badge_url": f"{origin}/badge/{quote(row['slug'])}",
+        "last_checked_at": row["last_checked_at"],
+        "last_ok": bool(row["last_ok"]) if row["last_checked_at"] else None,
+        "last_status_code": row["last_status_code"],
+        "last_latency_ms": row["last_latency_ms"],
+        "uptime": {
+            "24h": pct_value(stats, "24h"),
+            "7d": pct_value(stats, "7d"),
+            "30d": pct_value(stats, "30d"),
+        },
+        "recent_checks": [
+            {
+                "checked_at": check["checked_at"],
+                "ok": bool(check["ok"]),
+                "status_code": check["status_code"],
+                "latency_ms": check["latency_ms"],
+                "error": check["error"],
+            }
+            for check in checks
+        ],
+    }
+
+
+def json_document(data: Any) -> tuple[int, str, str]:
+    return 200, "application/json; charset=utf-8", json.dumps(data, indent=2, sort_keys=True)
+
+
+def text_document(body: str, content_type: str = "text/plain; charset=utf-8") -> tuple[int, str, str]:
+    return 200, content_type, body
+
+
+def trust_page() -> tuple[int, str, str]:
+    return page(
+        "Trust",
+        """
+<section class="panel">
+  <h1>Trust</h1>
+  <p>PingBadge monitors public HTTP and HTTPS URLs and publishes public uptime pages. It is built for low-stakes public projects, open-source demos, and experiments.</p>
+  <h2>Data</h2>
+  <p>Monitor URLs, display names, optional contact emails, check timestamps, HTTP status codes, latency, and short error messages are stored in SQLite on the service host.</p>
+  <h2>Limits</h2>
+  <p>Private network, localhost, credentialed URLs, and unusual ports are blocked. Creation is rate-limited globally while the service is young.</p>
+  <h2>Contact</h2>
+  <p>Email <a href="mailto:builtbycodex@y0u.se">builtbycodex@y0u.se</a> for removal requests, bug reports, or abuse reports.</p>
+</section>
+""",
+    )
+
+
+def privacy_page() -> tuple[int, str, str]:
+    return page(
+        "Privacy",
+        """
+<section class="panel">
+  <h1>Privacy</h1>
+  <p>PingBadge is public by design. Do not submit secrets, private URLs, or URLs that expose sensitive operational information.</p>
+  <p>Optional contact emails are used only to understand who owns a monitor or to respond to abuse and removal requests. There is no paid analytics, advertising tracker, or mailing list.</p>
+  <p>Server logs may include IP addresses and requested paths for operational debugging.</p>
+</section>
+""",
+    )
+
+
 def landing(error: str = "") -> tuple[int, str, str]:
     with closing(db()) as conn:
         monitors = conn.execute(
@@ -439,6 +518,7 @@ def landing(error: str = "") -> tuple[int, str, str]:
     <h1>Free uptime badges for public projects.</h1>
     <p>Create a monitor, share a status page, and embed a live SVG badge. Built on a zero-dollar stack by an autonomous AI founder.</p>
     <div class="actions">
+      <a class="button secondary" href="/m/pingbadge-d881c6">Service status</a>
       <a class="button secondary" href="https://github.com/builtbycodex/Trial01">View the build log</a>
     </div>
   </div>
@@ -511,6 +591,7 @@ def monitor_page(row: sqlite3.Row, origin: str, manage_token: str = "") -> tuple
   <div class="actions">
     <a class="button secondary" href="{esc(badge_url)}">Open badge</a>
     <a class="button secondary" href="{esc(page_url)}">Public page</a>
+    <a class="button secondary" href="{esc(origin)}/api/monitors/{esc(row['slug'])}">JSON</a>
   </div>
 </section>
 {manage}
@@ -591,8 +672,45 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = unquote(parsed.path)
         query = parse_qs(parsed.query)
+        origin = public_origin(self.headers)
+        if path == "/healthz":
+            self.respond(*text_document("ok\n"), include_body=include_body)
+            return
+        if path == "/robots.txt":
+            body = f"User-agent: *\nAllow: /\nSitemap: {origin}/sitemap.xml\n"
+            self.respond(*text_document(body), include_body=include_body)
+            return
+        if path == "/sitemap.xml":
+            with closing(db()) as conn:
+                rows = conn.execute("select slug from monitors order by created_at desc limit 200").fetchall()
+            urls = [f"{origin}/", f"{origin}/trust", f"{origin}/privacy"] + [f"{origin}/m/{quote(row['slug'])}" for row in rows]
+            body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"
+            body += "".join(f"  <url><loc>{esc(url)}</loc></url>\n" for url in urls)
+            body += "</urlset>\n"
+            self.respond(*text_document(body, "application/xml; charset=utf-8"), include_body=include_body)
+            return
         if path == "/":
             self.respond(*landing(), include_body=include_body)
+            return
+        if path == "/trust":
+            self.respond(*trust_page(), include_body=include_body)
+            return
+        if path == "/privacy":
+            self.respond(*privacy_page(), include_body=include_body)
+            return
+        if path.startswith("/api/monitors/"):
+            slug = path.removeprefix("/api/monitors/").strip("/")
+            if slug.endswith(".json"):
+                slug = slug[:-5]
+            row = get_monitor(slug)
+            if not row:
+                self.respond(404, "application/json; charset=utf-8", "{\"error\":\"monitor_not_found\"}\n", include_body=include_body)
+                return
+            self.respond(
+                *json_document(monitor_payload(row, origin)),
+                {"Access-Control-Allow-Origin": "*", "Cache-Control": "no-store, max-age=0"},
+                include_body=include_body,
+            )
             return
         if path.startswith("/m/"):
             slug = path.removeprefix("/m/").strip("/")
@@ -601,7 +719,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.respond(*page("Not found", "<h1>Monitor not found</h1>", 404), include_body=include_body)
                 return
             token = query.get("token", [""])[-1]
-            self.respond(*monitor_page(row, public_origin(self.headers), token), include_body=include_body)
+            self.respond(*monitor_page(row, origin, token), include_body=include_body)
             return
         if path.startswith("/badge/"):
             slug = path.removeprefix("/badge/").strip("/")

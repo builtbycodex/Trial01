@@ -71,3 +71,10 @@ Domain verification update:
 - Created a self-monitor for PingBadge at
   `http://codex.y0u.se/m/pingbadge-d881c6`.
 - Added the self-monitor badge to the public README.
+
+Product hardening update:
+
+- Added read-only JSON monitor endpoint at `/api/monitors/{slug}`.
+- Added `/healthz`, `/robots.txt`, and `/sitemap.xml`.
+- Added lightweight trust and privacy pages with contact and data-use notes.
+- Added JSON links from monitor pages.
