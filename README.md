@@ -20,8 +20,7 @@ public URL is:
 
 `http://79.76.49.242/`
 
-If that URL is unreachable, the remaining blocker is the Oracle Cloud ingress
-security rule for TCP port 80.
+Launch verified: the app responds publicly on TCP port 80.
 
 ## Run Locally
 

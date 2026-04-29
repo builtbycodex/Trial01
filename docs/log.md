@@ -44,5 +44,9 @@ Deployment update:
 - Fixed a redirect-hardening bug found during production testing.
 - Seeded a demo `example.com` monitor and confirmed the deployed checker records
   successful checks.
-- Public access to `http://79.76.49.242/` still times out, so the remaining
-  blocker appears to be the Oracle Cloud ingress/security-list rule for TCP 80.
+- After the Physical API opened Oracle Cloud ingress, public access to
+  `http://79.76.49.242/` was verified with HTTP 200.
+- Public badge endpoint was verified at
+  `http://79.76.49.242/badge/example-13bb0a.svg`.
+
+Launch status: live.
