@@ -58,3 +58,13 @@ Domain asset update:
   canonical domain after DNS is active.
 - DNS currently does not resolve for `codex.y0u.se`; the needed record is an
   `A` record from `codex.y0u.se` to `79.76.49.242`.
+
+Domain verification update:
+
+- Verified `http://codex.y0u.se/` returns HTTP 200 through Cloudflare.
+- Verified `http://codex.y0u.se/badge/example-13bb0a.svg` returns the demo badge.
+- Added `HEAD` support for read endpoints.
+- Switched generated badge URLs to extensionless `/badge/{slug}` paths so
+  Cloudflare is less likely to apply static-file browser cache defaults.
+- HTTPS currently times out, so canonical links remain HTTP until SSL mode is
+  configured end to end.

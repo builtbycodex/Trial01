@@ -462,7 +462,7 @@ def landing(error: str = "") -> tuple[int, str, str]:
 
 def monitor_page(row: sqlite3.Row, origin: str, manage_token: str = "") -> tuple[int, str, str]:
     cls, label = status_label(row)
-    badge_url = f"{origin}/badge/{quote(row['slug'])}.svg"
+    badge_url = f"{origin}/badge/{quote(row['slug'])}"
     page_url = f"{origin}/m/{quote(row['slug'])}"
     stats = uptime_stats(row["id"])
     checks = recent_checks(row["id"])
@@ -556,7 +556,14 @@ def svg_badge(row: sqlite3.Row) -> tuple[int, str, str]:
 class Handler(BaseHTTPRequestHandler):
     server_version = "PingBadge/0.1"
 
-    def respond(self, status: int, content_type: str, body: str, extra_headers: dict[str, str] | None = None) -> None:
+    def respond(
+        self,
+        status: int,
+        content_type: str,
+        body: str,
+        extra_headers: dict[str, str] | None = None,
+        include_body: bool = True,
+    ) -> None:
         encoded = body.encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", content_type)
@@ -566,7 +573,8 @@ class Handler(BaseHTTPRequestHandler):
             for key, value in extra_headers.items():
                 self.send_header(key, value)
         self.end_headers()
-        self.wfile.write(encoded)
+        if include_body:
+            self.wfile.write(encoded)
 
     def redirect(self, location: str) -> None:
         self.send_response(303)
@@ -579,32 +587,40 @@ class Handler(BaseHTTPRequestHandler):
         raw = self.rfile.read(length).decode("utf-8", errors="replace")
         return {key: values[-1] for key, values in parse_qs(raw, keep_blank_values=True).items()}
 
-    def do_GET(self) -> None:
+    def handle_read(self, include_body: bool) -> None:
         parsed = urlparse(self.path)
         path = unquote(parsed.path)
         query = parse_qs(parsed.query)
         if path == "/":
-            self.respond(*landing())
+            self.respond(*landing(), include_body=include_body)
             return
         if path.startswith("/m/"):
             slug = path.removeprefix("/m/").strip("/")
             row = get_monitor(slug)
             if not row:
-                self.respond(*page("Not found", "<h1>Monitor not found</h1>", 404))
+                self.respond(*page("Not found", "<h1>Monitor not found</h1>", 404), include_body=include_body)
                 return
             token = query.get("token", [""])[-1]
-            self.respond(*monitor_page(row, public_origin(self.headers), token))
+            self.respond(*monitor_page(row, public_origin(self.headers), token), include_body=include_body)
             return
-        if path.startswith("/badge/") and path.endswith(".svg"):
-            slug = path.removeprefix("/badge/")[:-4]
+        if path.startswith("/badge/"):
+            slug = path.removeprefix("/badge/").strip("/")
+            if slug.endswith(".svg"):
+                slug = slug[:-4]
             row = get_monitor(slug)
             if not row:
-                self.respond(404, "image/svg+xml; charset=utf-8", "")
+                self.respond(404, "image/svg+xml; charset=utf-8", "", include_body=include_body)
                 return
             status, content_type, body = svg_badge(row)
-            self.respond(status, content_type, body, {"Cache-Control": "no-cache, max-age=0"})
+            self.respond(status, content_type, body, {"Cache-Control": "no-store, max-age=0"}, include_body=include_body)
             return
-        self.respond(*page("Not found", "<h1>Not found</h1>", 404))
+        self.respond(*page("Not found", "<h1>Not found</h1>", 404), include_body=include_body)
+
+    def do_HEAD(self) -> None:
+        self.handle_read(False)
+
+    def do_GET(self) -> None:
+        self.handle_read(True)
 
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
